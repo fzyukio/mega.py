@@ -4,6 +4,7 @@ from Crypto.Cipher import AES
 from Crypto.PublicKey import RSA
 from Crypto.Util import Counter
 import os
+import sys
 import random
 import binascii
 import requests
@@ -78,16 +79,18 @@ class Mega(object):
             self.rsa_private_key = [0, 0, 0, 0]
 
             for i in range(4):
-                l = ((ord(private_key[0]) * 256 + ord(private_key[1]) + 7) / 8) + 2
+                if sys.version_info < (3,):
+                    l = ((ord(private_key[0]) * 256 + ord(private_key[1]) + 7) / 8) + 2
+                else:
+                    l = ((private_key[0] * 256 + private_key[1] + 7) // 8) + 2
                 self.rsa_private_key[i] = mpi_to_int(private_key[:l])
                 private_key = private_key[l:]
 
             encrypted_sid = mpi_to_int(base64_url_decode(resp['csid']))
-            rsa_decrypter = RSA.construct(
-                (self.rsa_private_key[0] * self.rsa_private_key[1],
-                 0L, self.rsa_private_key[2], self.rsa_private_key[0],
-                 self.rsa_private_key[1]))
-
+            #python 2 & 3 compatibility 
+            from builtins import int
+            bigzero = int(0)
+            rsa_decrypter = RSA.construct((self.rsa_private_key[0] * self.rsa_private_key[1],bigzero, self.rsa_private_key[2], self.rsa_private_key[0],self.rsa_private_key[1]))
             sid = '%x' % rsa_decrypter.key._decrypt(encrypted_sid)
             sid = binascii.unhexlify('0' + sid if len(sid) % 2 else sid)
             self.sid = base64_url_encode(sid[:43])
@@ -121,8 +124,8 @@ class Mega(object):
             match = re.findall(r'/#!(.*)', url)
             path = match[0]
             return path
-        else:
-            raise RequestError('Url key missing')
+#        else:
+#            raise RequestError('Url key missing')
 
     def _process_file(self, file, shared_keys):
         """
@@ -445,6 +448,45 @@ class Mega(object):
         file_key = path[1]
         self._download_file(file_id, file_key, dest_path, dest_filename, is_public=True)
 
+    def get_url_details(self, url):
+        file_details = {}
+        file_details['status'] = "init"
+        try:
+            path = self._parse_url(url).split('!')
+        except (IndexError, AttributeError):
+            file_details['status'] = "error"
+            file_details['remarks'] = "Invalid URL"
+            return file_details           
+        try: 
+            file_id = path[0]
+            file_key = path[1]
+        except IndexError:
+            file_details['status'] = "error"
+            file_details['remarks'] = "De-Encryption Key not found"
+            return file_details
+        try:
+            file_key = base64_to_a32(file_key)
+            file_data = self._api_request({'a': 'g', 'g': 1, 'p': file_id})
+            k = (file_key[0] ^ file_key[4], file_key[1] ^ file_key[5],
+                 file_key[2] ^ file_key[6], file_key[3] ^ file_key[7])
+            iv = file_key[4:6] + (0, 0)
+            meta_mac = file_key[6:8]
+            file_url = file_data['g']
+            file_size = file_data['s']
+            attribs = base64_url_decode(file_data['at'])
+            attribs = decrypt_attr(attribs, k)
+            file_name = attribs['n']
+        except: 
+            file_details['status'] = "error"
+            file_details['remarks'] = "Mega Error - please check link"
+            return file_details           
+
+        file_details['status'] = 'success'
+        file_details['name'] = file_name
+        file_details['size'] = file_size
+        return file_details
+
+
     def _download_file(self, file_handle, file_key, dest_path=None, dest_filename=None, is_public=False, file=None):
         if file is None:
             if is_public:
@@ -520,6 +562,7 @@ class Mega(object):
             if self.options.get('verbose') is True:
                 # temp file size
                 file_info = os.stat(temp_output_file.name)
+#                print('Status - {0:.2f} downloaded'.format(file_info.st_size / file_size))
                 print('{0} of {1} downloaded'.format(file_info.st_size, file_size))
 
         file_mac = str_to_a32(mac_str)
@@ -577,7 +620,7 @@ class Mega(object):
 
                 block = chunk[i:i + 16]
                 if len(block) % 16:
-                    block += '\0' * (16 - len(block) % 16)
+                    block += makebyte('\0' * (16 - len(block) % 16))
                 mac_str = mac_encryptor.encrypt(encryptor.encrypt(block))
 
                 #encrypt file and upload

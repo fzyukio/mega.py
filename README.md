@@ -1,6 +1,10 @@
-# Deprecated
+# Mega.py
 
-Mega.py is now deprecated, please use the official SDK https://github.com/meganz/sdk.
+The original Mega.py code is now deprecated, and recommends to use the official SDK https://github.com/meganz/sdk. 
+However, it is still the easiest Python client for mega.nz. The original code is still functioning in 
+Python 2. I have updated the code for Python 3. 
+
+Most of the functions are working, except for delete. Further checks need to be done. 
 
 I aim to write a wrapper for the SDK when i have the time to do so.
 
@@ -8,14 +12,12 @@ I aim to write a wrapper for the SDK when i have the time to do so.
 
 
 # Mega.py
-[![Build Status](https://travis-ci.org/richardasaurus/mega.py.png?branch=master)](https://travis-ci.org/richardasaurus/mega.py)
-[![Downloads](https://pypip.in/d/mega.py/badge.png)](https://crate.io/packages/mega.py/)
 
 Python library for the Mega.co.nz API, currently supporting:
  - login
  - uploading
  - downloading
- - deleting
+ - deleting (WIP)
  - searching
  - sharing
  - renaming

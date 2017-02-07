@@ -4,15 +4,29 @@ import base64
 import struct
 import binascii
 import random
+import sys
+
+### Python3 compatibility
+if sys.version_info < (3,):
+    def makebyte(x):
+        return x
+    def makestring(x):
+        return x
+else:
+    import codecs
+    def makebyte(x):
+        return codecs.latin_1_encode(x)[0]
+    def makestring(x):
+        return codecs.latin_1_decode(x)[0]
 
 
 def aes_cbc_encrypt(data, key):
-    aes_cipher = AES.new(key, AES.MODE_CBC, '\0' * 16)
+    aes_cipher = AES.new(key, AES.MODE_CBC, makebyte('\0' * 16))
     return aes_cipher.encrypt(data)
 
 
 def aes_cbc_decrypt(data, key):
-    aes_cipher = AES.new(key, AES.MODE_CBC, '\0' * 16)
+    aes_cipher = AES.new(key, AES.MODE_CBC, makebyte('\0' * 16))
     return aes_cipher.decrypt(data)
 
 
@@ -66,7 +80,9 @@ def encrypt_attr(attr, key):
 
 
 def decrypt_attr(attr, key):
-    attr = aes_cbc_decrypt(attr, a32_to_str(key)).rstrip('\0')
+    attr = aes_cbc_decrypt(attr, a32_to_str(key))
+    attr = makestring(attr)
+    attr = attr.rstrip('\0')
     return json.loads(attr[4:]) if attr[:6] == 'MEGA{"' else False
 
 
@@ -75,6 +91,8 @@ def a32_to_str(a):
 
 
 def str_to_a32(b):
+    if isinstance(b, str):
+        b = makebyte(b)
     if len(b) % 4:
         # pad to multiple of 4
         b += '\0' * (4 - len(b) % 4)
@@ -98,6 +116,7 @@ def base64_to_a32(s):
 
 def base64_url_encode(data):
     data = base64.b64encode(data)
+    data = makestring(data)
     for search, replace in (('+', '-'), ('/', '_'), ('=', '')):
         data = data.replace(search, replace)
     return data
