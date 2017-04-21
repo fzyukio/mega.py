@@ -40,7 +40,7 @@ class Mega(object):
         resp = self._api_request({'a': 'us', 'user': email, 'uh': uh})
         #if numeric error code response
         if isinstance(resp, int):
-            raise RequestError(resp)
+            raise RequestError("Logging error", code=resp)
         self._login_process(resp, password_aes)
 
     def login_anonymous(self):
@@ -58,7 +58,7 @@ class Mega(object):
         resp = self._api_request({'a': 'us', 'user': user})
         #if numeric error code response
         if isinstance(resp, int):
-            raise RequestError(resp)
+            raise RequestError("Anonymous login error", code=resp)
         self._login_process(resp, password_key)
 
     def _login_process(self, resp, password):
@@ -87,7 +87,7 @@ class Mega(object):
                 private_key = private_key[l:]
 
             encrypted_sid = mpi_to_int(base64_url_decode(resp['csid']))
-            #python 2 & 3 compatibility 
+            #python 2 & 3 compatibility
             from builtins import int
             bigzero = int(0)
             rsa_decrypter = RSA.construct((self.rsa_private_key[0] * self.rsa_private_key[1],bigzero, self.rsa_private_key[2], self.rsa_private_key[0],self.rsa_private_key[1]))
@@ -115,7 +115,7 @@ class Mega(object):
 
         #if numeric error code response
         if isinstance(json_resp, int):
-            raise RequestError(json_resp)
+            raise RequestError("Api request error", code=json_resp)
         return json_resp[0]
 
     def _parse_url(self, url):
@@ -281,7 +281,9 @@ class Mega(object):
         if 'h' in file and 'k' in file:
             public_handle = self._api_request({'a': 'l', 'n': file['h']})
             if public_handle == -11:
-                raise RequestError("Can't get a public link from that file (is this a shared file?)")
+                raise RequestError(
+                    "Can't get a public link from that file (is this a shared file?)",
+                    code=public_handle)
             decrypted_key = a32_to_base64(file['key'])
             return '{0}://{1}/#!{2}!{3}'.format(self.schema,
                                                 self.domain,
@@ -817,7 +819,7 @@ class Mega(object):
 
         #if numeric error code response
         if isinstance(data, int):
-            raise RequestError(data)
+            raise RequestError("Error getting public file info", code=data)
 
         if 'at' not in data or 's' not in data:
             raise ValueError("Unexpected result", data)
