@@ -1,11 +1,18 @@
 # Compiled source #
-###################
+########################
 *.pyc
 
+# Intellij environment #
+.cache
+.idea
+*.egg-info
+*.iml
+
 # Hidden files #
-###################
+########################
+
 # Build files #
-###################
+########################
 build/
 dist/
 .pypirc
