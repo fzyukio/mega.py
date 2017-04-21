@@ -19,7 +19,7 @@ m = mega.login()
 
 FIND_RESP = None
 TEST_CONTACT = 'test@mega.co.nz'
-TEST_PUBLIC_URL = 'https://mega.co.nz/#!EYI2VagT!Ic1yblki8oM4v6XHquCe4gu84kxc4glFchj8OvcT5lw'
+TEST_PUBLIC_URL = 'https://mega.nz/#!1iYHkDTL!rIivzxhmNxHpMzeuua0qPE4_zu9YWz8nhePDUJD6rok'
 TEST_FILE = os.path.basename(__file__)
 TEST_FOLDER = 'mega.py_testfolder_{0}'.format(random.random())
 
