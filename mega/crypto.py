@@ -75,7 +75,7 @@ def decrypt_key(a, key):
 def encrypt_attr(attr, key):
     attr = 'MEGA' + json.dumps(attr)
     if len(attr) % 16:
-        attr += '\0' * (16 - len(attr) % 16)
+        attr += b'\0' * (16 - len(attr) % 16)
     return aes_cbc_encrypt(attr, a32_to_str(key))
 
 
