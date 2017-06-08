@@ -536,7 +536,7 @@ class Mega(object):
             128, initial_value=((iv[0] << 32) + iv[1]) << 64)
         aes = AES.new(k_str, AES.MODE_CTR, counter=counter)
 
-        mac_str = '\0' * 16
+        mac_str = b'\0' * 16
         mac_encryptor = AES.new(k_str, AES.MODE_CBC, mac_str)
         iv_str = a32_to_str([iv[0], iv[1], iv[0], iv[1]])
 
@@ -558,7 +558,7 @@ class Mega(object):
 
             block = chunk[i:i + 16]
             if len(block) % 16:
-                block += '\0' * (16 - (len(block) % 16))
+                block += b'\0' * (16 - (len(block) % 16))
             mac_str = mac_encryptor.encrypt(encryptor.encrypt(block))
 
             if self.options.get('verbose') is True:
