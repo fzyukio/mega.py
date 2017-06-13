@@ -5,8 +5,9 @@ And them remove them from your account.
 """
 from mega import mega
 import unittest
-import random
+import mock
 import os
+import random
 
 FIND_RESP = None
 TEST_CONTACT = 'test@mega.co.nz'
@@ -96,6 +97,26 @@ class TestMega(unittest.TestCase):
         resp = self.mega.remove_contact(TEST_CONTACT)
         self.assertIsInstance(resp, int)
 
+    @mock.patch('requests.post')
+    def test_api_request_kwargs(self, m_requests):
+        m_requests.return_value.text = '[{}, ""]'
+        data = []
+        seq_id = self.mega.sequence_num
+        response = self.mega._api_request(data, **{'foo': 'bar'})
+        self.assertDictEqual({}, response)
+        params = {'id': seq_id, 'sid': self.mega.sid, 'foo': 'bar'}
+        m_requests.assert_called_once_with('https://g.api.mega.co.nz/cs', data='[]', params=params, timeout=160)
+
+    @mock.patch('requests.post')
+    def test_api_request_no_kwargs(self, m_requests):
+        m_requests.return_value.text = '[{}, ""]'
+        data = []
+        seq_id = self.mega.sequence_num
+        response = self.mega._api_request(data)
+        self.assertDictEqual({}, response)
+        params = {'id': seq_id, 'sid': self.mega.sid}
+        m_requests.assert_called_once_with('https://g.api.mega.co.nz/cs', data='[]', params=params, timeout=160)
+
 
 class LoginTests(unittest.TestCase):
 
@@ -147,7 +168,6 @@ class RequestErrorTests(unittest.TestCase):
             raise mega.RequestError(message)
         self.assertEqual(context.exception.args[0], "foo")
         self.assertIsNone(context.exception.code)
-
 
 if __name__ == '__main__':
     unittest.main()
