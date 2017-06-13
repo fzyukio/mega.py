@@ -1,4 +1,6 @@
 future
 requests>=0.10
 pycrypto
+pytest
 mega.py
+mock
