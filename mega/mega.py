@@ -95,12 +95,15 @@ class Mega(object):
             sid = binascii.unhexlify('0' + sid if len(sid) % 2 else sid)
             self.sid = base64_url_encode(sid[:43])
 
-    def _api_request(self, data):
+    def _api_request(self, data, **kwargs):
         params = {'id': self.sequence_num}
         self.sequence_num += 1
 
         if self.sid:
             params.update({'sid': self.sid})
+
+        if kwargs:
+            params.update(kwargs)
 
         #ensure input data is a list
         if not isinstance(data, list):
