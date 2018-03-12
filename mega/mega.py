@@ -1,5 +1,7 @@
 import re
 import json
+from json import JSONDecodeError
+
 from Crypto.Cipher import AES
 from Crypto.PublicKey import RSA
 from Crypto.Util import Counter
@@ -115,7 +117,11 @@ class Mega(object):
             params=params,
             data=json.dumps(data),
             timeout=self.timeout)
-        json_resp = json.loads(req.text)
+        try:
+            json_resp = json.loads(req.text)
+        except JSONDecodeError as e:
+            if req.status_code != 200:
+                raise Exception('{}. Code: {}'.format(req.reason, req.status_code))
 
         # if numeric error code response
         if isinstance(json_resp, int):
